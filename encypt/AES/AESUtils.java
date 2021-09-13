@@ -68,6 +68,10 @@ public class AESUtils {
     }
 
 
+    /**
+     * 生成盐值
+     * @return
+     */
     public static byte[] getIVByte() {
         byte[] iv = new byte[GCM_IV_LENGTH];
         SecureRandom secureRandom = new SecureRandom();
@@ -75,10 +79,22 @@ public class AESUtils {
         return iv;
     }
 
+    /**
+     * 加密
+     * @param str
+     * @return
+     */
     public static String encrypt(String str) {
         return encrypt(str, getSecretKey(), getIVByte());
     }
 
+    /**
+     * 加密
+     * @param str
+     * @param key
+     * @param iv
+     * @return
+     */
     public static String encrypt(String str, SecretKey key, byte[] iv) {
         String result = "";
         try {
@@ -110,6 +126,13 @@ public class AESUtils {
         return null;
     }
 
+    /**
+     * 解密
+     * @param str
+     * @param key
+     * @param iv
+     * @return
+     */
     public static String decrypt(String str, SecretKey key, byte[] iv) {
         byte[] bytes = null;
         try {
