@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/common-utils.iml" filepath="$PROJECT_DIR$/common-utils.iml" />
+      <module fileurl="file://$PROJECT_DIR$/encrypt/encrypt.iml" filepath="$PROJECT_DIR$/encrypt/encrypt.iml" />
       <module fileurl="file://$PROJECT_DIR$/encypt/encypt.iml" filepath="$PROJECT_DIR$/encypt/encypt.iml" />
     </modules>
   </component>
