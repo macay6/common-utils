@@ -1,21 +1,24 @@
+package com.example.aes;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.lang.model.element.VariableElement;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Properties;
 
 /**
  * @ClassName: AES/GCM加密工具类
- * @Description:
+ * @Description: 将随机生成的秘钥和盐值保存在配置文件中用于加解密， 同一个密码的加解密使用相同的配置,与测试类配合使用，为安全，定期获取新秘钥盐值修改配置文件
  * @Author: Macay
  * @Date: 2021/9/13 11:05 下午
  */
@@ -29,20 +32,24 @@ public class AESUtils {
 
     private static final int GCM_TAG_LENGTH = 16;
 
+    private static final Properties PROP = new Properties();
 
-    public static void main(String[] args) {
-        SecretKey secretKey = getSecretKey();
-        byte[] ivByte = getIVByte();
-        String encrypt = encrypt("Huawei@123", secretKey, ivByte);
-        System.out.println(encrypt);
+    private static InputStream IN = null;
 
-        String decrypt = decrypt(encrypt, secretKey, ivByte);
-        System.out.println(decrypt);
+    // 读取配置文件
+    static {
+        IN = AESUtils.class.getClassLoader().getResourceAsStream("aes.properties");
+        try {
+            PROP.load(IN);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     /**
      * 生成加密密钥
+     *
      * @return
      */
     public static SecretKey getSecretKey() {
@@ -67,32 +74,59 @@ public class AESUtils {
         return originalKey;
     }
 
+    /**
+     * 从配置文件中读取秘钥
+     *
+     * @return
+     */
+    public static SecretKey getCommonKeyFromConfig() {
+        String propertyKey = PROP.getProperty("aes.common.key");
+        byte[] decodeKey = Base64.getDecoder().decode(propertyKey);
+        SecretKeySpec originalKey = new SecretKeySpec(decodeKey, 0, decodeKey.length, "AES");
+        return originalKey;
+    }
+
 
     /**
      * 生成盐值
+     *
      * @return
      */
     public static byte[] getIVByte() {
         byte[] iv = new byte[GCM_IV_LENGTH];
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(iv);
+        System.out.println(iv.toString());
         return iv;
     }
 
     /**
-     * 加密
-     * @param str
+     * 从配置文件中读取盐值
+     *
      * @return
      */
-    public static String encrypt(String str) {
-        return encrypt(str, getSecretKey(), getIVByte());
+    public static byte[] getCommonIvByConfig() {
+        String propertyIv = PROP.getProperty("aes.common.iv");
+        byte[] bytes = propertyIv.getBytes();
+        return bytes;
     }
 
     /**
      * 加密
-     * @param str
-     * @param key
-     * @param iv
+     *
+     * @param str 密码明文字符串
+     * @return
+     */
+    public static String encrypt(String str) {
+        return encrypt(str, getCommonKeyFromConfig(), getCommonIvByConfig());
+    }
+
+    /**
+     * 加密，重载方法
+     *
+     * @param str 密码明文字符串
+     * @param key 秘钥
+     * @param iv  盐值
      * @return
      */
     public static String encrypt(String str, SecretKey key, byte[] iv) {
@@ -103,34 +137,32 @@ public class AESUtils {
             cipher.init(Cipher.ENCRYPT_MODE, key, gcmParameterSpec);
             byte[] bytes = cipher.doFinal(str.getBytes("utf-8"));
             result = Base64.getEncoder().encodeToString(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+
+            // catch中的异常可以合并
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | InvalidKeyException
+                ex) {
+            LOGGER.error("encrypt is error, exception is {}", ex.getMessage());
         }
         return result;
 
     }
 
+    /**
+     * 解密
+     *
+     * @param str 密码密文字符串
+     * @return
+     */
     public static String decrypt(String str) {
-        return null;
+        return decrypt(str, getCommonKeyFromConfig(), getCommonIvByConfig());
     }
 
     /**
      * 解密
-     * @param str
-     * @param key
-     * @param iv
+     *
+     * @param str 密码密文字符串
+     * @param key 秘钥
+     * @param iv  盐值
      * @return
      */
     public static String decrypt(String str, SecretKey key, byte[] iv) {
