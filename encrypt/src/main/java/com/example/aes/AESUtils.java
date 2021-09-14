@@ -118,6 +118,7 @@ public class AESUtils {
      * @return
      */
     public static String encrypt(String str) {
+        LOGGER.info("start to encrypt");
         return encrypt(str, getCommonKeyFromConfig(), getCommonIvByConfig());
     }
 

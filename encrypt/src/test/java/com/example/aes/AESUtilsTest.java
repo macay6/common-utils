@@ -10,6 +10,9 @@ import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * AES/GCM加解密帮助类测试类
+ */
 class AESUtilsTest {
 
     private static final int AES_KEY_SIZE = 256;
